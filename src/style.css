@@ -1,0 +1,168 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #172033;
+}
+
+button {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.header {
+  background: #ffffff;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e8ebf2;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.header p {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.profile {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #eef2ff;
+  font-size: 19px;
+}
+
+.container {
+  width: min(1100px, 100%);
+  margin: auto;
+  padding: 24px 18px;
+}
+
+.welcome {
+  background: #172033;
+  color: white;
+  border-radius: 20px;
+  padding: 26px 22px;
+  margin-bottom: 22px;
+}
+
+.welcome h2 {
+  font-size: 23px;
+  margin-bottom: 8px;
+}
+
+.welcome p {
+  color: #d5dbea;
+  font-size: 14px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e7eaf0;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 5px 20px rgba(20, 30, 50, 0.05);
+}
+
+.card > span {
+  font-size: 28px;
+}
+
+.card h3 {
+  margin-top: 14px;
+  font-size: 17px;
+}
+
+.card p {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 8px 0 16px;
+}
+
+.card button {
+  width: 100%;
+  padding: 11px;
+  border-radius: 10px;
+  background: #172033;
+  color: white;
+  font-weight: 600;
+}
+
+.card button:active {
+  transform: scale(0.98);
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  background: white;
+  border-top: 1px solid #e8ebf2;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 20;
+}
+
+.bottom-nav button {
+  background: transparent;
+  color: #4b5563;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 18px;
+}
+
+.bottom-nav small {
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding: 18px 14px;
+  }
+
+  .welcome {
+    padding: 22px 18px;
+  }
+}
+
+@media (min-width: 900px) {
+  .cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
