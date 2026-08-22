@@ -5,11 +5,14 @@ function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState(false);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -47,7 +50,7 @@ function App() {
 
         if (!data.session) {
           setMessage(
-            "Account created! Please check your email to confirm your account."
+            "Account created! Please check your email to verify your account."
           );
         } else {
           setMessage("Account created successfully!");
@@ -72,136 +75,397 @@ function App() {
   }
 
   if (loading) {
-    return <div className="loading">Loading WABizAI...</div>;
+    return (
+      <div className="loading-screen">
+        <div className="loading-logo">W</div>
+        <div className="loading-spinner"></div>
+        <p>Loading WABizAI...</p>
+      </div>
+    );
   }
 
   if (!session) {
     return (
       <div className="auth-page">
-        <div className="auth-card">
-          <div className="logo">W</div>
+        <div className="auth-glow glow-one"></div>
+        <div className="auth-glow glow-two"></div>
 
-          <h1>WABizAI</h1>
-          <p className="subtitle">
-            AI-powered business management platform
-          </p>
+        <div className="auth-layout">
+          {/* LEFT BRANDING */}
+          <div className="brand-panel">
+            <div className="brand-logo">
+              <span>W</span>
+            </div>
 
-          <h2>{signup ? "Create your account" : "Welcome back"}</h2>
+            <div className="brand-content">
+              <div className="brand-badge">
+                <span className="status-dot"></span>
+                AI BUSINESS PLATFORM
+              </div>
 
-          <form onSubmit={handleAuth}>
-            {signup && (
-              <input
-                type="text"
-                placeholder="Full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            )}
+              <h1>
+                Grow your business
+                <span> smarter with AI.</span>
+              </h1>
 
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+              <p>
+                WABizAI brings powerful AI tools, customer management and
+                business insights together in one simple platform.
+              </p>
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength="6"
-              required
-            />
+              <div className="brand-features">
+                <div className="brand-feature">
+                  <div className="feature-icon">✦</div>
+                  <div>
+                    <strong>AI Business Assistant</strong>
+                    <small>Get intelligent help anytime</small>
+                  </div>
+                </div>
 
-            <button className="primary-btn" disabled={busy}>
-              {busy
-                ? "Please wait..."
-                : signup
-                ? "Create Account"
-                : "Login"}
-            </button>
-          </form>
+                <div className="brand-feature">
+                  <div className="feature-icon">⌁</div>
+                  <div>
+                    <strong>Smart Analytics</strong>
+                    <small>Understand your business better</small>
+                  </div>
+                </div>
 
-          {message && <div className="message">{message}</div>}
+                <div className="brand-feature">
+                  <div className="feature-icon">✓</div>
+                  <div>
+                    <strong>Everything in one place</strong>
+                    <small>Customers, products & insights</small>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <button
-            className="switch-btn"
-            onClick={() => {
-              setSignup(!signup);
-              setMessage("");
-            }}
-          >
-            {signup
-              ? "Already have an account? Login"
-              : "Don't have an account? Sign up"}
-          </button>
+            <div className="brand-footer">
+              © 2026 WABizAI · Built for modern businesses
+            </div>
+          </div>
+
+          {/* AUTH CARD */}
+          <div className="auth-section">
+            <div className="mobile-brand">
+              <div className="brand-logo small">
+                <span>W</span>
+              </div>
+              <strong>WABizAI</strong>
+            </div>
+
+            <div className="auth-card">
+              <div className="auth-top">
+                <div>
+                  <p className="eyebrow">
+                    {signup ? "GET STARTED" : "WELCOME BACK"}
+                  </p>
+
+                  <h2>
+                    {signup ? "Create your account" : "Welcome back"}
+                  </h2>
+
+                  <p className="auth-description">
+                    {signup
+                      ? "Start managing your business smarter today."
+                      : "Sign in to continue to your business workspace."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="auth-tabs">
+                <button
+                  className={!signup ? "active" : ""}
+                  onClick={() => {
+                    setSignup(false);
+                    setMessage("");
+                  }}
+                  type="button"
+                >
+                  Login
+                </button>
+
+                <button
+                  className={signup ? "active" : ""}
+                  onClick={() => {
+                    setSignup(true);
+                    setMessage("");
+                  }}
+                  type="button"
+                >
+                  Create account
+                </button>
+              </div>
+
+              <form onSubmit={handleAuth} className="auth-form">
+                {signup && (
+                  <div className="input-group">
+                    <label>Full name</label>
+                    <div className="input-wrapper">
+                      <span className="input-icon">♙</span>
+
+                      <input
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        autoComplete="name"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="input-group">
+                  <label>Email address</label>
+
+                  <div className="input-wrapper">
+                    <span className="input-icon">@</span>
+
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <div className="password-label">
+                    <label>Password</label>
+
+                    {!signup && (
+                      <button
+                        type="button"
+                        className="forgot-btn"
+                        onClick={() =>
+                          setMessage(
+                            "Password reset will be available soon."
+                          )
+                        }
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="input-wrapper">
+                    <span className="input-icon">●</span>
+
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete={
+                        signup ? "new-password" : "current-password"
+                      }
+                      minLength="6"
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label="Toggle password visibility"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+
+                {signup && (
+                  <div className="terms">
+                    <span>✓</span>
+                    <p>
+                      By creating an account, you agree to use WABizAI
+                      responsibly.
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  className="primary-btn"
+                  type="submit"
+                  disabled={busy}
+                >
+                  {busy ? (
+                    <>
+                      <span className="button-spinner"></span>
+                      Please wait...
+                    </>
+                  ) : (
+                    <>
+                      {signup ? "Create my account" : "Sign in"}
+                      <span className="arrow">→</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {message && (
+                <div
+                  className={`message ${
+                    message.toLowerCase().includes("error") ||
+                    message.toLowerCase().includes("invalid")
+                      ? "error"
+                      : "success"
+                  }`}
+                >
+                  <span>
+                    {message.toLowerCase().includes("error") ||
+                    message.toLowerCase().includes("invalid")
+                      ? "!"
+                      : "✓"}
+                  </span>
+
+                  <p>{message}</p>
+                </div>
+              )}
+
+              <div className="auth-divider">
+                <span>Secure authentication</span>
+              </div>
+
+              <div className="security-note">
+                <span>🔒</span>
+                <p>Your account is protected with secure authentication.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
+  const userName =
+    session.user.user_metadata?.full_name ||
+    session.user.email?.split("@")[0] ||
+    "there";
+
   return (
     <div className="app">
-      <header className="header">
-        <div>
-          <h1>WABizAI</h1>
-          <p>AI-powered business assistant</p>
+      <header className="dashboard-header">
+        <div className="dashboard-brand">
+          <div className="brand-logo mini">
+            <span>W</span>
+          </div>
+
+          <div>
+            <strong>WABizAI</strong>
+            <small>Business Intelligence</small>
+          </div>
         </div>
 
-        <button className="profile">
-          👤
-        </button>
+        <div className="header-user">
+          <div className="header-user-info">
+            <strong>{userName}</strong>
+            <small>{session.user.email}</small>
+          </div>
+
+          <div className="avatar">
+            {userName.charAt(0).toUpperCase()}
+          </div>
+        </div>
       </header>
 
-      <main className="container">
-        <section className="welcome">
-          <h2>Welcome to WABizAI 👋</h2>
-          <p>{session.user.email}</p>
+      <main className="dashboard-container">
+        <section className="dashboard-welcome">
+          <div>
+            <span className="dashboard-badge">
+              <span className="status-dot"></span>
+              YOUR WORKSPACE
+            </span>
+
+            <h1>
+              Welcome back, <span>{userName}</span> 👋
+            </h1>
+
+            <p>
+              Your AI-powered business workspace is ready. What would you like
+              to work on today?
+            </p>
+          </div>
+
+          <div className="ai-orb">
+            <div>✦</div>
+          </div>
         </section>
 
-        <div className="cards">
-          <div className="card">
-            <span>🤖</span>
-            <h3>AI Assistant</h3>
-            <p>Get AI-powered help for your business.</p>
-            <button>Open Assistant</button>
+        <section className="dashboard-grid">
+          <div className="dashboard-card ai-card">
+            <div className="card-icon">✦</div>
+            <div className="card-content">
+              <span>AI ASSISTANT</span>
+              <h3>Your business copilot</h3>
+              <p>
+                Get instant AI help with ideas, content, customers and
+                business decisions.
+              </p>
+              <button>Open Assistant <span>→</span></button>
+            </div>
           </div>
 
-          <div className="card">
-            <span>👥</span>
-            <h3>Customers</h3>
-            <p>Manage customers and conversations.</p>
-            <button>Customers</button>
+          <div className="dashboard-card">
+            <div className="card-icon">♙</div>
+            <div className="card-content">
+              <span>CUSTOMERS</span>
+              <h3>Manage customers</h3>
+              <p>Keep your customer information organized in one place.</p>
+              <button>Open Customers <span>→</span></button>
+            </div>
           </div>
 
-          <div className="card">
-            <span>📦</span>
-            <h3>Products</h3>
-            <p>Manage products, prices and inventory.</p>
-            <button>Products</button>
+          <div className="dashboard-card">
+            <div className="card-icon">▦</div>
+            <div className="card-content">
+              <span>PRODUCTS</span>
+              <h3>Products & inventory</h3>
+              <p>Manage products, pricing and your business inventory.</p>
+              <button>Open Products <span>→</span></button>
+            </div>
           </div>
 
-          <div className="card">
-            <span>📊</span>
-            <h3>Analytics</h3>
-            <p>Track your business performance.</p>
-            <button>View Analytics</button>
+          <div className="dashboard-card">
+            <div className="card-icon">⌁</div>
+            <div className="card-content">
+              <span>ANALYTICS</span>
+              <h3>Business insights</h3>
+              <p>Understand your performance with smart business analytics.</p>
+              <button>View Analytics <span>→</span></button>
+            </div>
           </div>
-        </div>
+        </section>
 
         <button className="logout-btn" onClick={logout}>
-          Logout
+          Sign out
         </button>
       </main>
 
       <nav className="bottom-nav">
-        <button>🏠<small>Home</small></button>
-        <button>🤖<small>AI</small></button>
-        <button>📊<small>Stats</small></button>
-        <button>⚙️<small>Settings</small></button>
+        <button className="active">
+          <span>⌂</span>
+          <small>Home</small>
+        </button>
+
+        <button>
+          <span>✦</span>
+          <small>AI</small>
+        </button>
+
+        <button>
+          <span>⌁</span>
+          <small>Stats</small>
+        </button>
+
+        <button>
+          <span>⚙</span>
+          <small>Settings</small>
+        </button>
       </nav>
     </div>
   );
