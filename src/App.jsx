@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import AIChat from "./AIChat";
 import PremiumPlans from "./PremiumPlans";
+import Customers from "./Customers";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -10,6 +11,7 @@ function App() {
   const [signup, setSignup] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
+  const [showCustomers, setShowCustomers] = useState(false);
 
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetPassword, setResetPassword] = useState(false);
@@ -160,6 +162,7 @@ function App() {
 
     setShowAI(false);
     setShowPremium(false);
+    setShowCustomers(false);
   }
 
   if (loading) {
@@ -819,6 +822,18 @@ function App() {
   }
 
   /*
+   * CUSTOMERS
+   */
+  if (showCustomers) {
+    return (
+      <Customers
+        user={session.user}
+        onBack={() => setShowCustomers(false)}
+      />
+    );
+  }
+
+  /*
    * USER NAME
    */
   const userName =
@@ -975,7 +990,11 @@ function App() {
                 place.
               </p>
 
-              <button>
+              <button
+                onClick={() =>
+                  setShowCustomers(true)
+                }
+              >
                 Open Customers{" "}
                 <span>
                   →
