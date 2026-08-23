@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-
+import AIChat from "./AIChat";
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [signup, setSignup] = useState(false);
+  const [showAI, setShowAI] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetPassword, setResetPassword] = useState(false);
 
@@ -652,6 +653,14 @@ function App() {
       </div>
     );
   }
+  if (showAI) {
+  return (
+    <AIChat
+      user={session.user}
+      onBack={() => setShowAI(false)}
+    />
+  );
+}
 
   const userName =
     session.user.user_metadata?.full_name ||
@@ -722,9 +731,9 @@ function App() {
                 and business decisions.
               </p>
 
-              <button>
-                Open Assistant <span>→</span>
-              </button>
+              <button onClick={() => setShowAI(true)}>
+  Open Assistant <span>→</span>
+</button>
             </div>
           </div>
 
