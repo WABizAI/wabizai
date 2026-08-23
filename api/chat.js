@@ -12,31 +12,69 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message } = req.body;
+    const { messages } = req.body;
 
-    if (!message || !message.trim()) {
+    if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({
-        error: "Message is required",
+        error: "Messages are required",
       });
     }
 
-    const response = await ai.models.generateContent({
+    const contents = messages
+      .filter(
+        (message) =>
+          message &&
+          typeof message.text === "string" &&
+          (message.role === "user" ||
+            message.role === "assistant")
+      )
+      .map((message) => ({
+        role: message.role === "assistant" ? "model" : "user",
+        parts: [
+          {
+            text: message.text,
+          },
+        ],
+      }));
+
+    if (contents.length === 0) {
+      return res.status(400).json({
+        error: "No valid messages found",
+      });
+    }
+
+    const response = await ai.models.generateContentStream({
       model: "gemini-3.6-flash",
-      contents: message,
+      contents,
       config: {
         systemInstruction:
-          "You are WABizAI, a professional AI business assistant. Help small and medium businesses with marketing, sales, customers, products, business ideas, content and growth strategies. Give practical, clear and useful answers. Respond in the same language as the user.",
+          "You are WABizAI, a professional AI business assistant. Help small and medium businesses with marketing, sales, customers, products, business ideas, content and growth strategies. Give practical, clear and useful answers. Respond in the same language as the user. Keep answers useful and reasonably concise.",
       },
     });
 
-    return res.status(200).json({
-      reply: response.text,
-    });
-  } catch (error) {
-    console.error("Gemini API error:", error);
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
-    return res.status(500).json({
-      error: "Unable to get AI response right now.",
-    });
+    for await (const chunk of response) {
+      const text = chunk.text;
+
+      if (text) {
+        res.write(text);
+      }
+    }
+
+    res.end();
+  } catch (error) {
+    console.error("Gemini streaming error:", error);
+
+    if (!res.headersSent) {
+      return res.status(500).json({
+        error: "Unable to get AI response right now.",
+      });
+    }
+
+    res.end();
   }
 }
