@@ -24,13 +24,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    // =============================
-    // AUTHENTICATION
-    // =============================
-
+    // AUTH
     const authHeader = req.headers.authorization;
 
-    if (!authHeader?.startsWith("Bearer ")) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         error: "Please login first.",
       });
@@ -42,21 +39,18 @@ export default async function handler(req, res) {
 
     const {
       data: { user },
-      error: userError,
+      error: authError,
     } = await supabaseAdmin.auth.getUser(token);
 
-    if (userError || !user) {
-      console.error("Auth error:", userError);
+    if (authError || !user) {
+      console.error("AUTH ERROR:", authError);
 
       return res.status(401).json({
         error: "Invalid or expired session.",
       });
     }
 
-    // =============================
-    // REQUEST DATA
-    // =============================
-
+    // REQUEST
     const { messages } = req.body || {};
 
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -65,20 +59,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // =============================
     // PROFILE
-    // =============================
-    // Profile is optional for AI.
-    // If database permission is not available,
-    // AI will continue working.
-
-    let profile = null;
-
-    try {
-      const {
-        data: profileData,
-        error: profileError,
-      } = await supabaseAdmin
+    const { data: profile, error: profileError } =
+      await supabaseAdmin
         .from("profiles")
         .select(
           "id, plan, credits, daily_messages, daily_message_date"
@@ -86,33 +69,58 @@ export default async function handler(req, res) {
         .eq("id", user.id)
         .maybeSingle();
 
-      if (profileError) {
-        console.warn(
-          "Profile could not be loaded. Continuing without profile:",
-          profileError.message
-        );
-      } else {
-        profile = profileData;
-      }
-    } catch (profileError) {
-      console.warn(
-        "Profile check failed. Continuing with AI:",
-        profileError?.message
-      );
+    if (profileError) {
+      console.error("PROFILE ERROR:", profileError);
+
+      return res.status(500).json({
+        error: "Unable to load your profile.",
+      });
     }
 
-    // =============================
-    // CONVERT MESSAGES
-    // =============================
+    // CREATE PROFILE IF MISSING
+    if (!profile) {
+      const { error: createError } =
+        await supabaseAdmin
+          .from("profiles")
+          .insert({
+            id: user.id,
+            full_name:
+              user.user_metadata?.full_name ||
+              user.email?.split("@")[0] ||
+              "User",
+            plan: "free",
+            credits: 50,
+            daily_messages: 0,
+            daily_message_date:
+              new Date()
+                .toISOString()
+                .slice(0, 10),
+          });
 
+      if (createError) {
+        console.error(
+          "CREATE PROFILE ERROR:",
+          createError
+        );
+
+        return res.status(500).json({
+          error:
+            "Profile not found and could not be created.",
+        });
+      }
+    }
+
+    // GEMINI MESSAGES
     const contents = messages
       .filter(
         (message) =>
           message &&
           typeof message.text === "string" &&
           message.text.trim() &&
-          (message.role === "user" ||
-            message.role === "assistant")
+          (
+            message.role === "user" ||
+            message.role === "assistant"
+          )
       )
       .map((message) => ({
         role:
@@ -122,7 +130,7 @@ export default async function handler(req, res) {
 
         parts: [
           {
-            text: message.text.trim(),
+            text: message.text,
           },
         ],
       }));
@@ -133,10 +141,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // =============================
-    // GEMINI AI
-    // =============================
-
+    // GEMINI
     const response =
       await ai.models.generateContentStream({
         model: "gemini-3.6-flash",
@@ -145,35 +150,11 @@ export default async function handler(req, res) {
 
         config: {
           systemInstruction:
-            "You are WABizAI, a professional AI business assistant.
-
-Help small and medium businesses with:
-- Marketing
-- Sales
-- Customers
-- Products
-- Business ideas
-- Social media content
-- Customer communication
-- Business growth
-- Business strategy
-
-Give practical, clear and useful answers.
-
-Respond in the same language as the user.
-
-If the user writes Urdu or Roman Urdu, respond naturally in Urdu or Roman Urdu.
-
-Be friendly, professional and concise.
-
-Do not mention internal systems, APIs, databases, profiles or technical implementation unless the user specifically asks about them.",
+            "You are WABizAI, a professional AI business assistant. Help small and medium businesses with marketing, sales, customers, products, business ideas, content, customer communication and growth strategies. Give practical, clear and useful answers. Respond in the same language as the user. If the user writes Urdu or Roman Urdu, respond naturally in Urdu or Roman Urdu. Keep answers useful, practical and reasonably concise.",
         },
       });
 
-    // =============================
-    // STREAM RESPONSE
-    // =============================
-
+    // STREAM
     res.statusCode = 200;
 
     res.setHeader(
@@ -203,7 +184,7 @@ Do not mention internal systems, APIs, databases, profiles or technical implemen
 
   } catch (error) {
     console.error(
-      "Gemini streaming error:",
+      "GEMINI ERROR:",
       error
     );
 
