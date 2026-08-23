@@ -24,9 +24,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    /*
-     * AUTH TOKEN
-     */
+    // -----------------------------
+    // AUTHENTICATION
+    // -----------------------------
 
     const authHeader = req.headers.authorization;
 
@@ -36,11 +36,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const token = authHeader.replace("Bearer ", "");
-
-    /*
-     * VERIFY USER
-     */
+    const token = authHeader.replace("Bearer ", "").trim();
 
     const {
       data: { user },
@@ -48,16 +44,18 @@ export default async function handler(req, res) {
     } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
+      console.error("Auth error:", userError);
+
       return res.status(401).json({
         error: "Invalid or expired session.",
       });
     }
 
-    /*
-     * REQUEST DATA
-     */
+    // -----------------------------
+    // REQUEST DATA
+    // -----------------------------
 
-    const { messages } = req.body;
+    const { messages } = req.body || {};
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({
@@ -65,52 +63,78 @@ export default async function handler(req, res) {
       });
     }
 
-    /*
-     * CHECK + CONSUME AI USAGE
-     */
+    // -----------------------------
+    // CHECK USER PROFILE
+    // profiles.id = auth.users.id
+    // -----------------------------
 
-    const { data: usage, error: usageError } =
-      await supabaseAdmin.rpc(
-        "consume_ai_usage",
-        {
-          p_user_id: user.id,
-        }
-      );
+    const { data: profile, error: profileError } =
+      await supabaseAdmin
+        .from("profiles")
+        .select(
+          "id, plan, credits, daily_messages, daily_message_date"
+        )
+        .eq("id", user.id)
+        .maybeSingle();
 
-    if (usageError) {
-      console.error(
-        "Usage check error:",
-        usageError
-      );
+    if (profileError) {
+      console.error("Profile error:", profileError);
 
       return res.status(500).json({
-        error: "Unable to check AI usage.",
+        error: "Unable to load your profile.",
       });
     }
 
-    if (!usage?.allowed) {
-      return res.status(429).json({
-        error:
-          usage?.error ||
-          "AI usage limit reached.",
-        plan: usage?.plan || "free",
-        credits: usage?.credits ?? 0,
-        daily_messages:
-          usage?.daily_messages ?? 0,
-        daily_limit:
-          usage?.daily_limit ?? 10,
-      });
+    // If profile doesn't exist, create it.
+    if (!profile) {
+      const { data: newProfile, error: createProfileError } =
+        await supabaseAdmin
+          .from("profiles")
+          .insert({
+            id: user.id,
+            full_name:
+              user.user_metadata?.full_name ||
+              user.email?.split("@")[0] ||
+              "User",
+            plan: "free",
+            credits: 50,
+            daily_messages: 0,
+            daily_message_date:
+              new Date().toISOString().slice(0, 10),
+          })
+          .select(
+            "id, plan, credits, daily_messages, daily_message_date"
+          )
+          .single();
+
+      if (createProfileError) {
+        console.error(
+          "Profile creation error:",
+          createProfileError
+        );
+
+        return res.status(500).json({
+          error:
+            "Profile not found and could not be created.",
+        });
+      }
+
+      console.log(
+        "New profile created:",
+        newProfile.id
+      );
     }
 
-    /*
-     * CONVERT MESSAGES FOR GEMINI
-     */
+    // -----------------------------
+    // CONVERT MESSAGES FOR GEMINI
+    // -----------------------------
 
     const contents = messages
       .filter(
         (message) =>
           message &&
           typeof message.text === "string" &&
+          message.text.trim() &&
           (message.role === "user" ||
             message.role === "assistant")
       )
@@ -133,9 +157,9 @@ export default async function handler(req, res) {
       });
     }
 
-    /*
-     * GEMINI
-     */
+    // -----------------------------
+    // GEMINI
+    // -----------------------------
 
     const response =
       await ai.models.generateContentStream({
@@ -145,13 +169,13 @@ export default async function handler(req, res) {
 
         config: {
           systemInstruction:
-            "You are WABizAI, a professional AI business assistant. Help small and medium businesses with marketing, sales, customers, products, business ideas, content, customer communication and growth strategies. Give practical, clear and useful answers. Respond in the same language as the user. If the user writes Urdu or Roman Urdu, respond naturally in Urdu/Roman Urdu. Keep answers useful and reasonably concise.",
+            "You are WABizAI, a professional AI business assistant. Help small and medium businesses with marketing, sales, customers, products, business ideas, content, customer communication and growth strategies. Give practical, clear and useful answers. Respond in the same language as the user. If the user writes Urdu or Roman Urdu, respond naturally in Urdu or Roman Urdu. Keep answers useful, practical and reasonably concise.",
         },
       });
 
-    /*
-     * STREAM RESPONSE
-     */
+    // -----------------------------
+    // STREAM RESPONSE
+    // -----------------------------
 
     res.statusCode = 200;
 
@@ -162,7 +186,7 @@ export default async function handler(req, res) {
 
     res.setHeader(
       "Cache-Control",
-      "no-cache"
+      "no-cache, no-transform"
     );
 
     res.setHeader(
@@ -181,7 +205,6 @@ export default async function handler(req, res) {
     res.end();
 
   } catch (error) {
-
     console.error(
       "Gemini streaming error:",
       error
@@ -190,6 +213,7 @@ export default async function handler(req, res) {
     if (!res.headersSent) {
       return res.status(500).json({
         error:
+          error?.message ||
           "Unable to get AI response right now.",
       });
     }
