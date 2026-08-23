@@ -20,51 +20,39 @@ function AIChat({ user, onBack }) {
     });
   }, [messages, busy]);
 
-  function getReply(text) {
-    const lower = text.toLowerCase();
+  async function getReply(text) {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: text,
+      }),
+    });
 
-    if (
-      lower.includes("marketing") ||
-      lower.includes("advert") ||
-      lower.includes("promotion")
-    ) {
-      return "Absolutely! 🚀 I can help you create a marketing strategy. Start by identifying your target customer, your main offer and the platform where you want to reach them. For WhatsApp businesses, we can also create promotional messages and follow-up campaigns.";
+    let data;
+
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("Invalid response from AI server.");
     }
 
-    if (
-      lower.includes("customer") ||
-      lower.includes("client")
-    ) {
-      return "For customer management, WABizAI can help you organize customer information, create follow-up messages, identify valuable customers and build better customer relationships. 👥";
+    if (!response.ok) {
+      throw new Error(
+        data?.error || "Unable to get AI response right now."
+      );
     }
 
-    if (
-      lower.includes("product") ||
-      lower.includes("sell") ||
-      lower.includes("selling")
-    ) {
-      return "For your products 📦, I can help with product descriptions, pricing ideas, promotional content and sales strategies. Tell me what product you're selling and I'll help you build an offer.";
+    if (!data?.reply) {
+      throw new Error("AI returned an empty response.");
     }
 
-    if (
-      lower.includes("business idea") ||
-      lower.includes("idea")
-    ) {
-      return "Here are three directions you could explore: 1️⃣ AI-powered services, 2️⃣ WhatsApp-based business services, 3️⃣ Digital products. If you tell me your budget and skills, I can suggest a more specific business idea.";
-    }
-
-    if (
-      lower.includes("hello") ||
-      lower.includes("hi") ||
-      lower.includes("salam")
-    ) {
-      return "Wa Alaikum Assalam! 👋 I'm ready to help with your business. Ask me anything about marketing, customers, products, sales or business growth.";
-    }
-
-    return "That's a great question. 🤖 I'm currently running in demo mode, so my AI knowledge is limited right now. In the next step we'll connect WABizAI to a real AI model so I can give you much more powerful answers.";
+    return data.reply;
   }
 
-  function sendMessage(e) {
+  async function sendMessage(e) {
     e?.preventDefault();
 
     const text = input.trim();
@@ -81,8 +69,8 @@ function AIChat({ user, onBack }) {
     setInput("");
     setBusy(true);
 
-    setTimeout(() => {
-      const reply = getReply(text);
+    try {
+      const reply = await getReply(text);
 
       setMessages((prev) => [
         ...prev,
@@ -92,9 +80,18 @@ function AIChat({ user, onBack }) {
           text: reply,
         },
       ]);
-
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          role: "assistant",
+          text: `Sorry, I couldn't connect to the AI right now.\n\n${error.message}`,
+        },
+      ]);
+    } finally {
       setBusy(false);
-    }, 900);
+    }
   }
 
   function handleKeyDown(e) {
@@ -104,6 +101,22 @@ function AIChat({ user, onBack }) {
     }
   }
 
+  function startSuggestion(text) {
+    setInput(text);
+  }
+
+  function newChat() {
+    setMessages([
+      {
+        id: Date.now(),
+        role: "assistant",
+        text: "New conversation started. 👋\n\nHow can I help your business today?",
+      },
+    ]);
+
+    setInput("");
+  }
+
   return (
     <div className="ai-chat-page">
 
@@ -111,6 +124,7 @@ function AIChat({ user, onBack }) {
       <header className="ai-chat-header">
 
         <div className="ai-header-left">
+
           <button
             className="ai-back-btn"
             onClick={onBack}
@@ -125,24 +139,18 @@ function AIChat({ user, onBack }) {
 
           <div>
             <strong>WABizAI Assistant</strong>
+
             <span>
               <i></i>
               AI Business Copilot
             </span>
           </div>
+
         </div>
 
         <button
           className="ai-new-chat"
-          onClick={() =>
-            setMessages([
-              {
-                id: Date.now(),
-                role: "assistant",
-                text: "New conversation started. 👋\n\nHow can I help your business today?",
-              },
-            ])
-          }
+          onClick={newChat}
         >
           + <span>New chat</span>
         </button>
@@ -154,66 +162,69 @@ function AIChat({ user, onBack }) {
 
         <div className="ai-chat-container">
 
-          <div className="ai-chat-intro">
+          {/* INTRO */}
+          {messages.length === 1 && (
+            <div className="ai-chat-intro">
 
-            <div className="ai-big-icon">
-              ✦
+              <div className="ai-big-icon">
+                ✦
+              </div>
+
+              <h1>
+                Your business,
+                <span> powered by AI.</span>
+              </h1>
+
+              <p>
+                Ask WABizAI for ideas, strategies, content and
+                business advice.
+              </p>
+
+              <div className="ai-suggestions">
+
+                <button
+                  onClick={() =>
+                    startSuggestion(
+                      "Give me 5 marketing ideas for my business"
+                    )
+                  }
+                >
+                  <span>✦</span>
+                  Marketing ideas
+                </button>
+
+                <button
+                  onClick={() =>
+                    startSuggestion(
+                      "How can I get more customers?"
+                    )
+                  }
+                >
+                  <span>♙</span>
+                  Get more customers
+                </button>
+
+                <button
+                  onClick={() =>
+                    startSuggestion(
+                      "Give me a business growth strategy"
+                    )
+                  }
+                >
+                  <span>⌁</span>
+                  Growth strategy
+                </button>
+
+              </div>
+
             </div>
-
-            <h1>
-              Your business,
-              <span> powered by AI.</span>
-            </h1>
-
-            <p>
-              Ask WABizAI for ideas, strategies, content and
-              business advice.
-            </p>
-
-            <div className="ai-suggestions">
-
-              <button
-                onClick={() =>
-                  setInput(
-                    "Give me 5 marketing ideas for my business"
-                  )
-                }
-              >
-                <span>✦</span>
-                Marketing ideas
-              </button>
-
-              <button
-                onClick={() =>
-                  setInput(
-                    "How can I get more customers?"
-                  )
-                }
-              >
-                <span>♙</span>
-                Get more customers
-              </button>
-
-              <button
-                onClick={() =>
-                  setInput(
-                    "Give me a business growth strategy"
-                  )
-                }
-              >
-                <span>⌁</span>
-                Growth strategy
-              </button>
-
-            </div>
-
-          </div>
+          )}
 
           {/* MESSAGES */}
-
           <div className="ai-messages">
 
             {messages.map((message) => (
+
               <div
                 key={message.id}
                 className={`ai-message-row ${message.role}`}
@@ -226,22 +237,28 @@ function AIChat({ user, onBack }) {
                 )}
 
                 <div className="ai-message">
+
                   {message.text.split("\n").map(
-                    (line, index) => (
+                    (line, index, lines) => (
                       <React.Fragment key={index}>
+
                         {line}
 
-                        {index <
-                          message.text.split("\n").length -
-                            1 && <br />}
+                        {index < lines.length - 1 && (
+                          <br />
+                        )}
+
                       </React.Fragment>
                     )
                   )}
+
                 </div>
 
               </div>
+
             ))}
 
+            {/* TYPING INDICATOR */}
             {busy && (
               <div className="ai-message-row assistant">
 
@@ -250,9 +267,11 @@ function AIChat({ user, onBack }) {
                 </div>
 
                 <div className="typing-message">
+
                   <span></span>
                   <span></span>
                   <span></span>
+
                 </div>
 
               </div>
@@ -266,8 +285,7 @@ function AIChat({ user, onBack }) {
 
       </main>
 
-      {/* INPUT */}
-
+      {/* INPUT AREA */}
       <div className="ai-input-area">
 
         <form
