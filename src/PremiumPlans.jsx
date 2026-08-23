@@ -1,4 +1,5 @@
 import React from "react";
+import "./PremiumPlans.css";
 
 function PremiumPlans({ profile, onBack }) {
   const currentPlan = profile?.plan || "free";
