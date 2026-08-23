@@ -807,10 +807,10 @@ function App() {
           <small>Home</small>
         </button>
 
-        <button>
-          <span>✦</span>
-          <small>AI</small>
-        </button>
+        <button onClick={() => setShowAI(true)}>
+  <span>✦</span>
+  <small>AI</small>
+</button>
 
         <button>
           <span>⌁</span>
