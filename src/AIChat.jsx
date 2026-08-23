@@ -21,9 +21,7 @@ function AIChat({ user, onBack }) {
     } 👋\n\nI'm your WABizAI business assistant. I can help you with marketing, customers, products, business ideas and more.\n\nWhat would you like to work on today?`,
   };
 
-  /*
-   * Load all conversations
-   */
+  // Load conversations
   async function loadConversations() {
     if (!user?.id) return;
 
@@ -36,19 +34,14 @@ function AIChat({ user, onBack }) {
       });
 
     if (error) {
-      console.error(
-        "Conversation loading error:",
-        error
-      );
+      console.error("Conversation loading error:", error);
       return;
     }
 
     setConversations(data || []);
   }
 
-  /*
-   * Load messages for a conversation
-   */
+  // Load messages
   async function loadConversation(id) {
     if (!user?.id || !id) return;
 
@@ -57,9 +50,7 @@ function AIChat({ user, onBack }) {
     try {
       const { data, error } = await supabase
         .from("chat_messages")
-        .select(
-          "id, role, content, created_at"
-        )
+        .select("id, role, content, created_at")
         .eq("conversation_id", id)
         .eq("user_id", user.id)
         .order("created_at", {
@@ -84,18 +75,13 @@ function AIChat({ user, onBack }) {
 
       setHistoryOpen(false);
     } catch (error) {
-      console.error(
-        "Message loading error:",
-        error
-      );
+      console.error("Message loading error:", error);
     } finally {
       setLoadingHistory(false);
     }
   }
 
-  /*
-   * Initial history
-   */
+  // Initial history
   useEffect(() => {
     async function initializeChat() {
       if (!user?.id) return;
@@ -124,59 +110,40 @@ function AIChat({ user, onBack }) {
     initializeChat();
   }, [user?.id]);
 
-  /*
-   * Auto scroll
-   */
+  // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages, busy]);
 
-  /*
-   * Create conversation
-   */
-  async function createConversation(
-    firstMessage
-  ) {
+  // Create conversation
+  async function createConversation(firstMessage) {
     const title =
       firstMessage.length > 45
-        ? firstMessage.substring(0, 45) +
-          "..."
+        ? firstMessage.substring(0, 45) + "..."
         : firstMessage;
 
     const { data, error } = await supabase
       .from("chat_conversations")
       .insert({
         user_id: user.id,
-        title:
-          title || "New conversation",
+        title: title || "New conversation",
       })
-      .select(
-        "id, title, created_at, updated_at"
-      )
+      .select("id, title, created_at, updated_at")
       .single();
 
     if (error) throw error;
 
     setConversationId(data.id);
 
-    setConversations((prev) => [
-      data,
-      ...prev,
-    ]);
+    setConversations((prev) => [data, ...prev]);
 
     return data.id;
   }
 
-  /*
-   * Save message
-   */
-  async function saveMessage(
-    activeId,
-    role,
-    content
-  ) {
+  // Save message
+  async function saveMessage(activeId, role, content) {
     const { data, error } = await supabase
       .from("chat_messages")
       .insert({
@@ -185,9 +152,7 @@ function AIChat({ user, onBack }) {
         role,
         content,
       })
-      .select(
-        "id, role, content, created_at"
-      )
+      .select("id, role, content, created_at")
       .single();
 
     if (error) throw error;
@@ -195,14 +160,9 @@ function AIChat({ user, onBack }) {
     return data;
   }
 
-  /*
-   * Update conversation
-   */
-  async function touchConversation(
-    activeId
-  ) {
-    const now =
-      new Date().toISOString();
+  // Update conversation
+  async function touchConversation(activeId) {
+    const now = new Date().toISOString();
 
     const { error } = await supabase
       .from("chat_conversations")
@@ -213,10 +173,7 @@ function AIChat({ user, onBack }) {
       .eq("user_id", user.id);
 
     if (error) {
-      console.error(
-        "Conversation update error:",
-        error
-      );
+      console.error("Conversation update error:", error);
     }
 
     setConversations((prev) =>
@@ -237,19 +194,13 @@ function AIChat({ user, onBack }) {
     );
   }
 
-  /*
-   * Send message
-   */
+  // Send message
   async function sendMessage(e) {
     e?.preventDefault();
 
     const text = input.trim();
 
-    if (
-      !text ||
-      busy ||
-      loadingHistory
-    ) {
+    if (!text || busy || loadingHistory) {
       return;
     }
 
@@ -257,28 +208,19 @@ function AIChat({ user, onBack }) {
       setBusy(true);
       setInput("");
 
-      let activeId =
-        conversationId;
+      let activeId = conversationId;
 
-      /*
-       * Create conversation
-       */
+      // Create conversation
       if (!activeId) {
-        activeId =
-          await createConversation(
-            text
-          );
+        activeId = await createConversation(text);
       }
 
-      /*
-       * Save user message
-       */
-      const savedUser =
-        await saveMessage(
-          activeId,
-          "user",
-          text
-        );
+      // Save user message
+      const savedUser = await saveMessage(
+        activeId,
+        "user",
+        text
+      );
 
       const userMessage = {
         id: savedUser.id,
@@ -288,9 +230,7 @@ function AIChat({ user, onBack }) {
 
       const conversationForAI = [
         ...messages.filter(
-          (message) =>
-            message.id !==
-            "welcome"
+          (message) => message.id !== "welcome"
         ),
         userMessage,
       ];
@@ -300,11 +240,8 @@ function AIChat({ user, onBack }) {
         userMessage,
       ]);
 
-      /*
-       * Assistant placeholder
-       */
-      const assistantId =
-        `assistant-${Date.now()}`;
+      // Assistant placeholder
+      const assistantId = `assistant-${Date.now()}`;
 
       setMessages((prev) => [
         ...prev,
@@ -315,51 +252,45 @@ function AIChat({ user, onBack }) {
         },
       ]);
 
-      /*
-       * Gemini API
-       */
+      // Get current Supabase session
       const {
-  data: { session: currentSession },
-} = await supabase.auth.getSession();
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
 
-const response =
-  await fetch("/api/chat", {
-    method: "POST",
+      if (!currentSession?.access_token) {
+        throw new Error(
+          "Your login session has expired. Please login again."
+        );
+      }
 
-    headers: {
-      "Content-Type":
-        "application/json",
+      // Call AI API
+      const response = await fetch("/api/chat", {
+        method: "POST",
 
-      Authorization: `Bearer ${currentSession?.access_token}`,
-    },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
 
-    body: JSON.stringify({
-      messages:
-        conversationForAI,
-    }),
-  });
-          body: JSON.stringify({
-            messages:
-              conversationForAI,
-          }),
-        });
+        body: JSON.stringify({
+          messages: conversationForAI,
+        }),
+      });
 
       if (!response.ok) {
         let errorMessage =
           "Unable to get AI response.";
 
         try {
-          const errorData =
-            await response.json();
+          const errorData = await response.json();
 
           errorMessage =
-            errorData?.error ||
-            errorMessage;
-        } catch {}
+            errorData?.error || errorMessage;
+        } catch {
+          // Ignore JSON parsing error
+        }
 
-        throw new Error(
-          errorMessage
-        );
+        throw new Error(errorMessage);
       }
 
       if (!response.body) {
@@ -368,61 +299,47 @@ const response =
         );
       }
 
-      const reader =
-        response.body.getReader();
-
-      const decoder =
-        new TextDecoder();
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
       let assistantText = "";
 
-      /*
-       * Streaming
-       */
+      // Streaming response
       while (true) {
-        const {
-          value,
-          done,
-        } = await reader.read();
+        const { value, done } =
+          await reader.read();
 
         if (done) break;
 
-        const chunk =
-          decoder.decode(value, {
-            stream: true,
-          });
+        const chunk = decoder.decode(value, {
+          stream: true,
+        });
 
         assistantText += chunk;
 
         setMessages((prev) =>
           prev.map((message) =>
-            message.id ===
-            assistantId
+            message.id === assistantId
               ? {
                   ...message,
-                  text:
-                    assistantText,
+                  text: assistantText,
                 }
               : message
           )
         );
       }
 
-      const finalChunk =
-        decoder.decode();
+      const finalChunk = decoder.decode();
 
       if (finalChunk) {
-        assistantText +=
-          finalChunk;
+        assistantText += finalChunk;
 
         setMessages((prev) =>
           prev.map((message) =>
-            message.id ===
-            assistantId
+            message.id === assistantId
               ? {
                   ...message,
-                  text:
-                    assistantText,
+                  text: assistantText,
                 }
               : message
           )
@@ -435,9 +352,7 @@ const response =
         );
       }
 
-      /*
-       * Save AI response
-       */
+      // Save AI response
       const savedAssistant =
         await saveMessage(
           activeId,
@@ -447,34 +362,23 @@ const response =
 
       setMessages((prev) =>
         prev.map((message) =>
-          message.id ===
-          assistantId
+          message.id === assistantId
             ? {
-                id:
-                  savedAssistant.id,
-                role:
-                  "assistant",
-                text:
-                  assistantText,
+                id: savedAssistant.id,
+                role: "assistant",
+                text: assistantText,
               }
             : message
         )
       );
 
-      await touchConversation(
-        activeId
-      );
-
+      await touchConversation(activeId);
     } catch (error) {
-      console.error(
-        "AI chat error:",
-        error
-      );
+      console.error("AI chat error:", error);
 
       setMessages((prev) =>
         prev.map((message) =>
-          message.role ===
-            "assistant" &&
+          message.role === "assistant" &&
           message.text === ""
             ? {
                 ...message,
@@ -488,9 +392,7 @@ const response =
     }
   }
 
-  /*
-   * New chat
-   */
+  // New chat
   function newChat() {
     setConversationId(null);
     setMessages([welcomeMessage]);
@@ -498,37 +400,24 @@ const response =
     setHistoryOpen(false);
   }
 
-  /*
-   * Delete conversation
-   */
-  async function deleteConversation(
-    id
-  ) {
+  // Delete conversation
+  async function deleteConversation(id) {
     if (!user?.id) return;
 
-    const confirmed =
-      window.confirm(
-        "Delete this conversation?"
-      );
+    const confirmed = window.confirm(
+      "Delete this conversation?"
+    );
 
     if (!confirmed) return;
 
-    const { error } =
-      await supabase
-        .from(
-          "chat_conversations"
-        )
-        .delete()
-        .eq("id", id)
-        .eq(
-          "user_id",
-          user.id
-        );
+    const { error } = await supabase
+      .from("chat_conversations")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
 
     if (error) {
-      alert(
-        "Unable to delete conversation."
-      );
+      alert("Unable to delete conversation.");
       console.error(error);
       return;
     }
@@ -545,9 +434,7 @@ const response =
     }
   }
 
-  /*
-   * Enter to send
-   */
+  // Enter to send
   function handleKeyDown(e) {
     if (
       e.key === "Enter" &&
@@ -558,9 +445,7 @@ const response =
     }
   }
 
-  /*
-   * Suggestions
-   */
+  // Suggestions
   function startSuggestion(text) {
     setInput(text);
   }
@@ -581,21 +466,13 @@ const response =
       {/* HISTORY SIDEBAR */}
       <aside
         className={`ai-history-sidebar ${
-          historyOpen
-            ? "open"
-            : ""
+          historyOpen ? "open" : ""
         }`}
       >
-
         <div className="history-header">
-
           <div>
-            <strong>
-              WABizAI
-            </strong>
-            <span>
-              Chat History
-            </span>
+            <strong>WABizAI</strong>
+            <span>Chat History</span>
           </div>
 
           <button
@@ -606,7 +483,6 @@ const response =
           >
             ×
           </button>
-
         </div>
 
         <button
@@ -618,26 +494,19 @@ const response =
         </button>
 
         <div className="history-list">
-
-          {conversations.length ===
-          0 ? (
+          {conversations.length === 0 ? (
             <div className="history-empty">
               <div>✦</div>
-              <p>
-                No conversations yet
-              </p>
+              <p>No conversations yet</p>
               <small>
-                Your chats will appear
-                here.
+                Your chats will appear here.
               </small>
             </div>
           ) : (
             conversations.map(
               (conversation) => (
                 <div
-                  key={
-                    conversation.id
-                  }
+                  key={conversation.id}
                   className={`history-item ${
                     conversationId ===
                     conversation.id
@@ -645,7 +514,6 @@ const response =
                       : ""
                   }`}
                 >
-
                   <button
                     className="history-chat-button"
                     onClick={() =>
@@ -660,9 +528,7 @@ const response =
 
                     <span className="history-chat-info">
                       <strong>
-                        {
-                          conversation.title
-                        }
+                        {conversation.title}
                       </strong>
 
                       <small>
@@ -684,19 +550,16 @@ const response =
                   >
                     🗑
                   </button>
-
                 </div>
               )
             )
           )}
-
         </div>
 
         <div className="history-footer">
           <span>🔒</span>
           Your conversations are private.
         </div>
-
       </aside>
 
       {/* MAIN */}
@@ -704,7 +567,6 @@ const response =
 
         {/* HEADER */}
         <header className="ai-chat-header">
-
           <div className="ai-header-left">
 
             <button
@@ -739,7 +601,6 @@ const response =
                 AI Business Copilot
               </span>
             </div>
-
           </div>
 
           <button
@@ -748,16 +609,13 @@ const response =
           >
             + <span>New chat</span>
           </button>
-
         </header>
 
         {/* CHAT */}
         <main className="ai-chat-main">
-
           <div className="ai-chat-container">
 
-            {messages.length ===
-              1 &&
+            {messages.length === 1 &&
               messages[0]?.role ===
                 "assistant" && (
                 <div className="ai-chat-intro">
@@ -775,9 +633,8 @@ const response =
                   </h1>
 
                   <p>
-                    Ask WABizAI for
-                    ideas, strategies,
-                    content and
+                    Ask WABizAI for ideas,
+                    strategies, content and
                     business advice.
                   </p>
 
@@ -817,7 +674,6 @@ const response =
                     </button>
 
                   </div>
-
                 </div>
               )}
 
@@ -827,9 +683,7 @@ const response =
               {messages.map(
                 (message) => (
                   <div
-                    key={
-                      message.id
-                    }
+                    key={message.id}
                     className={`ai-message-row ${message.role}`}
                   >
 
@@ -851,9 +705,7 @@ const response =
                             lines
                           ) => (
                             <React.Fragment
-                              key={
-                                index
-                              }
+                              key={index}
                             >
                               {line}
 
@@ -880,43 +732,32 @@ const response =
                         )}
 
                     </div>
-
                   </div>
                 )
               )}
 
               {busy &&
                 !messages[
-                  messages.length -
-                    1
+                  messages.length - 1
                 ]?.text && (
-                  <div className="ai-message-row assistant">
+                <div className="ai-message-row assistant">
 
-                    <div className="message-avatar">
-                      ✦
-                    </div>
-
-                    <div className="typing-message">
-
-                      <span></span>
-                      <span></span>
-                      <span></span>
-
-                    </div>
-
+                  <div className="message-avatar">
+                    ✦
                   </div>
-                )}
 
-              <div
-                ref={
-                  messagesEndRef
-                }
-              />
+                  <div className="typing-message">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
 
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
-
           </div>
-
         </main>
 
         {/* INPUT */}
@@ -924,21 +765,15 @@ const response =
 
           <form
             className="ai-input-box"
-            onSubmit={
-              sendMessage
-            }
+            onSubmit={sendMessage}
           >
 
             <textarea
               value={input}
               onChange={(e) =>
-                setInput(
-                  e.target.value
-                )
+                setInput(e.target.value)
               }
-              onKeyDown={
-                handleKeyDown
-              }
+              onKeyDown={handleKeyDown}
               placeholder="Ask anything about your business..."
               rows="1"
               disabled={
@@ -962,17 +797,15 @@ const response =
           </form>
 
           <p className="ai-disclaimer">
-            WABizAI can make
-            mistakes. Check
-            important business
-            information before
-            making decisions.
+            WABizAI can make mistakes.
+            Check important business
+            information before making
+            decisions.
           </p>
 
         </div>
 
       </div>
-
     </div>
   );
 }
