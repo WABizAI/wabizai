@@ -5,7 +5,9 @@ function AIChat({ user, onBack }) {
     {
       id: 1,
       role: "assistant",
-      text: `Hi ${user?.user_metadata?.full_name || "there"} 👋\n\nI'm your WABizAI business assistant. I can help you with marketing, customers, products, business ideas and more.\n\nWhat would you like to work on today?`,
+      text: `Hi ${
+        user?.user_metadata?.full_name || "there"
+      } 👋\n\nI'm your WABizAI business assistant. I can help you with marketing, customers, products, business ideas and more.\n\nWhat would you like to work on today?`,
     },
   ]);
 
@@ -20,38 +22,6 @@ function AIChat({ user, onBack }) {
     });
   }, [messages, busy]);
 
-  async function getReply(text) {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: text,
-      }),
-    });
-
-    let data;
-
-    try {
-      data = await response.json();
-    } catch {
-      throw new Error("Invalid response from AI server.");
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        data?.error || "Unable to get AI response right now."
-      );
-    }
-
-    if (!data?.reply) {
-      throw new Error("AI returned an empty response.");
-    }
-
-    return data.reply;
-  }
-
   async function sendMessage(e) {
     e?.preventDefault();
 
@@ -65,30 +35,115 @@ function AIChat({ user, onBack }) {
       text,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const conversation = [
+      ...messages,
+      userMessage,
+    ];
+
+    setMessages(conversation);
     setInput("");
     setBusy(true);
 
-    try {
-      const reply = await getReply(text);
+    const assistantId = Date.now() + 1;
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          role: "assistant",
-          text: reply,
+    // Empty assistant message for streaming
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: assistantId,
+        role: "assistant",
+        text: "",
+      },
+    ]);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      ]);
+        body: JSON.stringify({
+          messages: conversation,
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = "Unable to get AI response.";
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.error || errorMessage;
+        } catch {
+          // Ignore invalid error response
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      if (!response.body) {
+        throw new Error("Streaming is not supported by this response.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      let assistantText = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+
+        if (done) break;
+
+        const chunk = decoder.decode(value, {
+          stream: true,
+        });
+
+        assistantText += chunk;
+
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantId
+              ? {
+                  ...message,
+                  text: assistantText,
+                }
+              : message
+          )
+        );
+      }
+
+      // Finish decoding any remaining bytes
+      const finalChunk = decoder.decode();
+
+      if (finalChunk) {
+        assistantText += finalChunk;
+
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantId
+              ? {
+                  ...message,
+                  text: assistantText,
+                }
+              : message
+          )
+        );
+      }
+
+      if (!assistantText.trim()) {
+        throw new Error("AI returned an empty response.");
+      }
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          role: "assistant",
-          text: `Sorry, I couldn't connect to the AI right now.\n\n${error.message}`,
-        },
-      ]);
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === assistantId
+            ? {
+                ...message,
+                text: `Sorry, I couldn't connect to the AI right now.\n\n${error.message}`,
+              }
+            : message
+        )
+      );
     } finally {
       setBusy(false);
     }
@@ -252,6 +307,16 @@ function AIChat({ user, onBack }) {
                     )
                   )}
 
+                  {/* Streaming cursor */}
+                  {busy &&
+                    message.role === "assistant" &&
+                    message.id ===
+                      messages[messages.length - 1]?.id && (
+                      <span className="ai-streaming-cursor">
+                        ▌
+                      </span>
+                    )}
+
                 </div>
 
               </div>
@@ -259,23 +324,24 @@ function AIChat({ user, onBack }) {
             ))}
 
             {/* TYPING INDICATOR */}
-            {busy && (
-              <div className="ai-message-row assistant">
+            {busy &&
+              !messages[messages.length - 1]?.text && (
+                <div className="ai-message-row assistant">
 
-                <div className="message-avatar">
-                  ✦
+                  <div className="message-avatar">
+                    ✦
+                  </div>
+
+                  <div className="typing-message">
+
+                    <span></span>
+                    <span></span>
+                    <span></span>
+
+                  </div>
+
                 </div>
-
-                <div className="typing-message">
-
-                  <span></span>
-                  <span></span>
-                  <span></span>
-
-                </div>
-
-              </div>
-            )}
+              )}
 
             <div ref={messagesEndRef}></div>
 
@@ -285,7 +351,7 @@ function AIChat({ user, onBack }) {
 
       </main>
 
-      {/* INPUT AREA */}
+      {/* INPUT */}
       <div className="ai-input-area">
 
         <form
