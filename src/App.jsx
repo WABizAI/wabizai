@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import AIChat from "./AIChat";
+import PremiumPlans from "./PremiumPlans";
+
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [signup, setSignup] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [showPremium, setShowPremium] = useState(false);
+
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetPassword, setResetPassword] = useState(false);
 
@@ -153,6 +157,9 @@ function App() {
 
   async function logout() {
     await supabase.auth.signOut();
+
+    setShowAI(false);
+    setShowPremium(false);
   }
 
   if (loading) {
@@ -165,6 +172,9 @@ function App() {
     );
   }
 
+  /*
+   * AUTH SCREEN
+   */
   if (!session) {
     return (
       <div className="auth-page">
@@ -175,11 +185,13 @@ function App() {
 
           {/* LEFT BRANDING */}
           <div className="brand-panel">
+
             <div className="brand-logo">
               <span>W</span>
             </div>
 
             <div className="brand-content">
+
               <div className="brand-badge">
                 <span className="status-dot"></span>
                 AI BUSINESS PLATFORM
@@ -196,8 +208,10 @@ function App() {
               </p>
 
               <div className="brand-features">
+
                 <div className="brand-feature">
                   <div className="feature-icon">✦</div>
+
                   <div>
                     <strong>AI Business Assistant</strong>
                     <small>Get intelligent help anytime</small>
@@ -206,6 +220,7 @@ function App() {
 
                 <div className="brand-feature">
                   <div className="feature-icon">⌁</div>
+
                   <div>
                     <strong>Smart Analytics</strong>
                     <small>Understand your business better</small>
@@ -214,27 +229,33 @@ function App() {
 
                 <div className="brand-feature">
                   <div className="feature-icon">✓</div>
+
                   <div>
                     <strong>Everything in one place</strong>
                     <small>Customers, products & insights</small>
                   </div>
                 </div>
+
               </div>
             </div>
 
             <div className="brand-footer">
               © 2026 WABizAI · Built for modern businesses
             </div>
+
           </div>
 
           {/* AUTH SECTION */}
           <div className="auth-section">
 
             <div className="mobile-brand">
+
               <div className="brand-logo small">
                 <span>W</span>
               </div>
+
               <strong>WABizAI</strong>
+
             </div>
 
             <div className="auth-card">
@@ -243,28 +264,43 @@ function App() {
               {resetPassword ? (
                 <>
                   <div className="auth-top">
-                    <p className="eyebrow">SECURITY</p>
 
-                    <h2>Create new password</h2>
+                    <p className="eyebrow">
+                      SECURITY
+                    </p>
+
+                    <h2>
+                      Create new password
+                    </h2>
 
                     <p className="auth-description">
                       Choose a strong new password for your WABizAI account.
                     </p>
+
                   </div>
 
                   <form
                     onSubmit={handleUpdatePassword}
                     className="auth-form"
                   >
+
                     <div className="input-group">
-                      <label>New password</label>
+
+                      <label>
+                        New password
+                      </label>
 
                       <div className="input-wrapper">
-                        <span className="input-icon">●</span>
+
+                        <span className="input-icon">
+                          ●
+                        </span>
 
                         <input
                           type={
-                            showNewPassword ? "text" : "password"
+                            showNewPassword
+                              ? "text"
+                              : "password"
                           }
                           placeholder="Enter new password"
                           value={newPassword}
@@ -279,19 +315,31 @@ function App() {
                           type="button"
                           className="password-toggle"
                           onClick={() =>
-                            setShowNewPassword(!showNewPassword)
+                            setShowNewPassword(
+                              !showNewPassword
+                            )
                           }
                         >
-                          {showNewPassword ? "Hide" : "Show"}
+                          {showNewPassword
+                            ? "Hide"
+                            : "Show"}
                         </button>
+
                       </div>
+
                     </div>
 
                     <div className="input-group">
-                      <label>Confirm new password</label>
+
+                      <label>
+                        Confirm new password
+                      </label>
 
                       <div className="input-wrapper">
-                        <span className="input-icon">●</span>
+
+                        <span className="input-icon">
+                          ●
+                        </span>
 
                         <input
                           type={
@@ -302,7 +350,9 @@ function App() {
                           placeholder="Confirm new password"
                           value={confirmPassword}
                           onChange={(e) =>
-                            setConfirmPassword(e.target.value)
+                            setConfirmPassword(
+                              e.target.value
+                            )
                           }
                           minLength="6"
                           required
@@ -317,9 +367,13 @@ function App() {
                             )
                           }
                         >
-                          {showConfirmPassword ? "Hide" : "Show"}
+                          {showConfirmPassword
+                            ? "Hide"
+                            : "Show"}
                         </button>
+
                       </div>
+
                     </div>
 
                     <button
@@ -335,10 +389,13 @@ function App() {
                       ) : (
                         <>
                           Update password
-                          <span className="arrow">→</span>
+                          <span className="arrow">
+                            →
+                          </span>
                         </>
                       )}
                     </button>
+
                   </form>
 
                   {message && (
@@ -349,40 +406,57 @@ function App() {
                   )}
 
                   <div className="auth-divider">
-                    <span>Secure password recovery</span>
+                    <span>
+                      Secure password recovery
+                    </span>
                   </div>
 
                   <div className="security-note">
                     <span>🔒</span>
+
                     <p>
                       Never share your password with anyone.
                     </p>
                   </div>
                 </>
+
               ) : forgotPassword ? (
 
                 /* FORGOT PASSWORD */
                 <>
                   <div className="auth-top">
-                    <p className="eyebrow">PASSWORD RECOVERY</p>
 
-                    <h2>Reset your password</h2>
+                    <p className="eyebrow">
+                      PASSWORD RECOVERY
+                    </p>
+
+                    <h2>
+                      Reset your password
+                    </h2>
 
                     <p className="auth-description">
                       Enter your email and we'll send you a secure
                       password reset link.
                     </p>
+
                   </div>
 
                   <form
                     onSubmit={handleForgotPassword}
                     className="auth-form"
                   >
+
                     <div className="input-group">
-                      <label>Email address</label>
+
+                      <label>
+                        Email address
+                      </label>
 
                       <div className="input-wrapper">
-                        <span className="input-icon">@</span>
+
+                        <span className="input-icon">
+                          @
+                        </span>
 
                         <input
                           type="email"
@@ -394,7 +468,9 @@ function App() {
                           autoComplete="email"
                           required
                         />
+
                       </div>
+
                     </div>
 
                     <button
@@ -410,10 +486,13 @@ function App() {
                       ) : (
                         <>
                           Send reset link
-                          <span className="arrow">→</span>
+                          <span className="arrow">
+                            →
+                          </span>
                         </>
                       )}
                     </button>
+
                   </form>
 
                   {message && (
@@ -439,11 +518,14 @@ function App() {
                   </button>
 
                   <div className="auth-divider">
-                    <span>Secure authentication</span>
+                    <span>
+                      Secure authentication
+                    </span>
                   </div>
 
                   <div className="security-note">
                     <span>🔒</span>
+
                     <p>
                       Your account remains protected during recovery.
                     </p>
@@ -455,9 +537,13 @@ function App() {
                 /* LOGIN / SIGNUP */
                 <>
                   <div className="auth-top">
+
                     <div>
+
                       <p className="eyebrow">
-                        {signup ? "GET STARTED" : "WELCOME BACK"}
+                        {signup
+                          ? "GET STARTED"
+                          : "WELCOME BACK"}
                       </p>
 
                       <h2>
@@ -471,12 +557,19 @@ function App() {
                           ? "Start managing your business smarter today."
                           : "Sign in to continue to your business workspace."}
                       </p>
+
                     </div>
+
                   </div>
 
                   <div className="auth-tabs">
+
                     <button
-                      className={!signup ? "active" : ""}
+                      className={
+                        !signup
+                          ? "active"
+                          : ""
+                      }
                       onClick={() => {
                         setSignup(false);
                         setMessage("");
@@ -487,7 +580,11 @@ function App() {
                     </button>
 
                     <button
-                      className={signup ? "active" : ""}
+                      className={
+                        signup
+                          ? "active"
+                          : ""
+                      }
                       onClick={() => {
                         setSignup(true);
                         setMessage("");
@@ -496,18 +593,26 @@ function App() {
                     >
                       Create account
                     </button>
+
                   </div>
 
                   <form
                     onSubmit={handleAuth}
                     className="auth-form"
                   >
+
                     {signup && (
                       <div className="input-group">
-                        <label>Full name</label>
+
+                        <label>
+                          Full name
+                        </label>
 
                         <div className="input-wrapper">
-                          <span className="input-icon">♙</span>
+
+                          <span className="input-icon">
+                            ♙
+                          </span>
 
                           <input
                             type="text"
@@ -519,15 +624,23 @@ function App() {
                             autoComplete="name"
                             required
                           />
+
                         </div>
+
                       </div>
                     )}
 
                     <div className="input-group">
-                      <label>Email address</label>
+
+                      <label>
+                        Email address
+                      </label>
 
                       <div className="input-wrapper">
-                        <span className="input-icon">@</span>
+
+                        <span className="input-icon">
+                          @
+                        </span>
 
                         <input
                           type="email"
@@ -539,12 +652,18 @@ function App() {
                           autoComplete="email"
                           required
                         />
+
                       </div>
+
                     </div>
 
                     <div className="input-group">
+
                       <div className="password-label">
-                        <label>Password</label>
+
+                        <label>
+                          Password
+                        </label>
 
                         {!signup && (
                           <button
@@ -558,14 +677,20 @@ function App() {
                             Forgot password?
                           </button>
                         )}
+
                       </div>
 
                       <div className="input-wrapper">
-                        <span className="input-icon">●</span>
+
+                        <span className="input-icon">
+                          ●
+                        </span>
 
                         <input
                           type={
-                            showPassword ? "text" : "password"
+                            showPassword
+                              ? "text"
+                              : "password"
                           }
                           placeholder="Enter your password"
                           value={password}
@@ -585,22 +710,30 @@ function App() {
                           type="button"
                           className="password-toggle"
                           onClick={() =>
-                            setShowPassword(!showPassword)
+                            setShowPassword(
+                              !showPassword
+                            )
                           }
                         >
-                          {showPassword ? "Hide" : "Show"}
+                          {showPassword
+                            ? "Hide"
+                            : "Show"}
                         </button>
+
                       </div>
+
                     </div>
 
                     {signup && (
                       <div className="terms">
+
                         <span>✓</span>
 
                         <p>
                           By creating an account, you agree to use
                           WABizAI responsibly.
                         </p>
+
                       </div>
                     )}
 
@@ -620,10 +753,13 @@ function App() {
                             ? "Create my account"
                             : "Sign in"}
 
-                          <span className="arrow">→</span>
+                          <span className="arrow">
+                            →
+                          </span>
                         </>
                       )}
                     </button>
+
                   </form>
 
                   {message && (
@@ -634,7 +770,9 @@ function App() {
                   )}
 
                   <div className="auth-divider">
-                    <span>Secure authentication</span>
+                    <span>
+                      Secure authentication
+                    </span>
                   </div>
 
                   <div className="security-note">
@@ -645,105 +783,192 @@ function App() {
                       authentication.
                     </p>
                   </div>
+
                 </>
               )}
+
             </div>
           </div>
         </div>
       </div>
     );
   }
-  if (showAI) {
-  return (
-    <AIChat
-      user={session.user}
-      onBack={() => setShowAI(false)}
-    />
-  );
-}
 
+  /*
+   * AI CHAT
+   */
+  if (showAI) {
+    return (
+      <AIChat
+        user={session.user}
+        onBack={() => setShowAI(false)}
+      />
+    );
+  }
+
+  /*
+   * PREMIUM PLANS
+   */
+  if (showPremium) {
+    return (
+      <PremiumPlans
+        user={session.user}
+        onBack={() => setShowPremium(false)}
+      />
+    );
+  }
+
+  /*
+   * USER NAME
+   */
   const userName =
     session.user.user_metadata?.full_name ||
     session.user.email?.split("@")[0] ||
     "there";
 
+  /*
+   * DASHBOARD
+   */
   return (
     <div className="app">
+
+      {/* HEADER */}
       <header className="dashboard-header">
+
         <div className="dashboard-brand">
+
           <div className="brand-logo mini">
             <span>W</span>
           </div>
 
           <div>
-            <strong>WABizAI</strong>
-            <small>Business Intelligence</small>
+            <strong>
+              WABizAI
+            </strong>
+
+            <small>
+              Business Intelligence
+            </small>
           </div>
+
         </div>
 
         <div className="header-user">
+
           <div className="header-user-info">
-            <strong>{userName}</strong>
-            <small>{session.user.email}</small>
+
+            <strong>
+              {userName}
+            </strong>
+
+            <small>
+              {session.user.email}
+            </small>
+
           </div>
 
           <div className="avatar">
-            {userName.charAt(0).toUpperCase()}
+            {userName
+              .charAt(0)
+              .toUpperCase()}
           </div>
+
         </div>
+
       </header>
 
+      {/* MAIN DASHBOARD */}
       <main className="dashboard-container">
+
+        {/* WELCOME */}
         <section className="dashboard-welcome">
+
           <div>
+
             <span className="dashboard-badge">
               <span className="status-dot"></span>
               YOUR WORKSPACE
             </span>
 
             <h1>
-              Welcome back, <span>{userName}</span> 👋
+              Welcome back,{" "}
+              <span>
+                {userName}
+              </span>{" "}
+              👋
             </h1>
 
             <p>
               Your AI-powered business workspace is ready. What
               would you like to work on today?
             </p>
+
           </div>
 
           <div className="ai-orb">
-            <div>✦</div>
+            <div>
+              ✦
+            </div>
           </div>
+
         </section>
 
+        {/* DASHBOARD CARDS */}
         <section className="dashboard-grid">
 
+          {/* AI */}
           <div className="dashboard-card ai-card">
-            <div className="card-icon">✦</div>
+
+            <div className="card-icon">
+              ✦
+            </div>
 
             <div className="card-content">
-              <span>AI ASSISTANT</span>
 
-              <h3>Your business copilot</h3>
+              <span>
+                AI ASSISTANT
+              </span>
+
+              <h3>
+                Your business copilot
+              </h3>
 
               <p>
                 Get instant AI help with ideas, content, customers
                 and business decisions.
               </p>
 
-              <button onClick={() => setShowAI(true)}>
-  Open Assistant <span>→</span>
-</button>
+              <button
+                onClick={() =>
+                  setShowAI(true)
+                }
+              >
+                Open Assistant{" "}
+                <span>
+                  →
+                </span>
+              </button>
+
             </div>
+
           </div>
 
+          {/* CUSTOMERS */}
           <div className="dashboard-card">
-            <div className="card-icon">♙</div>
+
+            <div className="card-icon">
+              ♙
+            </div>
 
             <div className="card-content">
-              <span>CUSTOMERS</span>
 
-              <h3>Manage customers</h3>
+              <span>
+                CUSTOMERS
+              </span>
+
+              <h3>
+                Manage customers
+              </h3>
 
               <p>
                 Keep your customer information organized in one
@@ -751,18 +976,32 @@ function App() {
               </p>
 
               <button>
-                Open Customers <span>→</span>
+                Open Customers{" "}
+                <span>
+                  →
+                </span>
               </button>
+
             </div>
+
           </div>
 
+          {/* PRODUCTS */}
           <div className="dashboard-card">
-            <div className="card-icon">▦</div>
+
+            <div className="card-icon">
+              ▦
+            </div>
 
             <div className="card-content">
-              <span>PRODUCTS</span>
 
-              <h3>Products & inventory</h3>
+              <span>
+                PRODUCTS
+              </span>
+
+              <h3>
+                Products & inventory
+              </h3>
 
               <p>
                 Manage products, pricing and your business
@@ -770,18 +1009,32 @@ function App() {
               </p>
 
               <button>
-                Open Products <span>→</span>
+                Open Products{" "}
+                <span>
+                  →
+                </span>
               </button>
+
             </div>
+
           </div>
 
+          {/* ANALYTICS */}
           <div className="dashboard-card">
-            <div className="card-icon">⌁</div>
+
+            <div className="card-icon">
+              ⌁
+            </div>
 
             <div className="card-content">
-              <span>ANALYTICS</span>
 
-              <h3>Business insights</h3>
+              <span>
+                ANALYTICS
+              </span>
+
+              <h3>
+                Business insights
+              </h3>
 
               <p>
                 Understand your performance with smart business
@@ -789,39 +1042,114 @@ function App() {
               </p>
 
               <button>
-                View Analytics <span>→</span>
+                View Analytics{" "}
+                <span>
+                  →
+                </span>
               </button>
+
             </div>
+
+          </div>
+
+          {/* PREMIUM */}
+          <div className="dashboard-card premium-card">
+
+            <div className="card-icon">
+              💎
+            </div>
+
+            <div className="card-content">
+
+              <span>
+                WABIZAI PREMIUM
+              </span>
+
+              <h3>
+                Unlock more AI power
+              </h3>
+
+              <p>
+                Get higher AI limits, advanced business tools and
+                premium features for your business.
+              </p>
+
+              <button
+                onClick={() =>
+                  setShowPremium(true)
+                }
+              >
+                Explore Premium{" "}
+                <span>
+                  →
+                </span>
+              </button>
+
+            </div>
+
           </div>
 
         </section>
 
-        <button className="logout-btn" onClick={logout}>
+        {/* LOGOUT */}
+        <button
+          className="logout-btn"
+          onClick={logout}
+        >
           Sign out
         </button>
+
       </main>
 
+      {/* BOTTOM NAV */}
       <nav className="bottom-nav">
+
         <button className="active">
-          <span>⌂</span>
-          <small>Home</small>
+          <span>
+            ⌂
+          </span>
+
+          <small>
+            Home
+          </small>
         </button>
 
-        <button onClick={() => setShowAI(true)}>
-  <span>✦</span>
-  <small>AI</small>
-</button>
+        <button
+          onClick={() =>
+            setShowAI(true)
+          }
+        >
+          <span>
+            ✦
+          </span>
+
+          <small>
+            AI
+          </small>
+        </button>
 
         <button>
-          <span>⌁</span>
-          <small>Stats</small>
+          <span>
+            ⌁
+          </span>
+
+          <small>
+            Stats
+          </small>
         </button>
 
         <button>
-          <span>⚙</span>
-          <small>Settings</small>
+          <span>
+            ⚙
+          </span>
+
+          <small>
+            Settings
+          </small>
         </button>
+
       </nav>
+
     </div>
   );
 }
