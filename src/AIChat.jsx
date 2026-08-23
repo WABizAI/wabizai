@@ -318,13 +318,26 @@ function AIChat({ user, onBack }) {
       /*
        * Gemini API
        */
-      const response =
-        await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+      const {
+  data: { session: currentSession },
+} = await supabase.auth.getSession();
+
+const response =
+  await fetch("/api/chat", {
+    method: "POST",
+
+    headers: {
+      "Content-Type":
+        "application/json",
+
+      Authorization: `Bearer ${currentSession?.access_token}`,
+    },
+
+    body: JSON.stringify({
+      messages:
+        conversationForAI,
+    }),
+  });
           body: JSON.stringify({
             messages:
               conversationForAI,
